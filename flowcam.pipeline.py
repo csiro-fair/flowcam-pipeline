@@ -127,8 +127,7 @@ class FlowCamPipeline(BasePipeline):
                     images_dir = rep_dir / "images"
                     images_dir.mkdir(exist_ok=True, parents=True)
                     i = self.find_sub_images(file_path, images_dir, i)
-                if file_path.suffix.lower() == ".tiff":
-                    self.logger.info(f"Extracting vignettes from {file_path.name}")
+                if file_path.suffix.lower() == ".tif":
                     cal_dir = rep_dir / "cal"
                     cal_dir.mkdir(exist_ok=True, parents=True)
                     copy2(file_path, cal_dir)
