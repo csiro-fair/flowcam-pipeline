@@ -39,7 +39,7 @@ class FlowCamPipeline(BasePipeline):
         return {
             "project_pi": "Joanna Strzelecki",
             "data_collector": "Joanna Strzelecki",
-            "platform_id": "FlowCam8000",
+            "platform_id": "FC8000",
         }
 
     @staticmethod
@@ -251,7 +251,7 @@ class FlowCamPipeline(BasePipeline):
                             image_data_list = [
                                 ImageData(
                                     # iFDO core (required)
-                                    image_datetime=datetime.strptime(row["Timestamp"], "%d-%m-%Y %H:%M:%S"),
+                                    image_datetime=datetime.strptime(row["Timestamp"], "%m-%d-%Y %H:%M:%S"),
                                     # image_latitude=float(row["latitude"]),
                                     # image_longitude=float(row["longitude"]),
                                     # image_altitude=None,
@@ -292,7 +292,7 @@ class FlowCamPipeline(BasePipeline):
                                     # image_camera_pitch_degrees: Optional[float] = None
                                     # image_camera_roll_degrees: Optional[float] = None
                                     image_overlap_fraction=0,
-                                    image_datetime_format="%d-%m-%Y %H:%M:%S",
+                                    image_datetime_format="%m-%d-%Y %H:%M:%S",
                                     # image_camera_pose: Optional[CameraPose] = None
                                     # image_camera_housing_viewport=camera_housing_viewport,
                                     # image_flatport_parameters: Optional[FlatportParameters] = None
