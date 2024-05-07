@@ -266,7 +266,7 @@ class FlowCamPipeline(BasePipeline):
                                     # image_hash_sha256=image_hash_sha256,
                                     image_pi=image_pi,
                                     image_creators=image_creators,
-                                    image_license="CC BY-NC-ND 4.0",
+                                    image_license="CC BY-NC 4.0",
                                     image_copyright="CSIRO",
                                     # image_abstract=row["abstract"],
                                     #
@@ -275,8 +275,6 @@ class FlowCamPipeline(BasePipeline):
                                     image_quality=ImageQuality.PRODUCT,
                                     image_deployment=ImageDeployment.SURVEY,
                                     # image_navigation=ImageNavigation.RECONSTRUCTED,
-                                    # TODO: Mention to Timm Schoening
-                                    # TODO: Also ask about mapping to EXIF
                                     # image_scale_reference=ImageScaleReference.NONE,
                                     image_illumination=ImageIllumination.ARTIFICIAL_LIGHT,
                                     image_pixel_mag=ImagePixelMagnitude.MM,
