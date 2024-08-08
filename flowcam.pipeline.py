@@ -29,7 +29,7 @@ from ifdo.models import (
 from marimba.core.pipeline import BasePipeline
 from marimba.core.utils.rich import error_panel
 from marimba.core.wrappers.dataset import DatasetWrapper
-from marimba.marimba import __version__
+from marimba.main import __version__
 
 
 class FlowCamPipeline(BasePipeline):
