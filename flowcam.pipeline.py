@@ -1,11 +1,10 @@
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from shutil import copy2
-from typing import Any, Dict, List, Optional, Tuple
-from rich import print
+from typing import Any
 
 import cv2
 import numpy as np
@@ -13,7 +12,6 @@ import pandas as pd
 import typer
 from ifdo.models import (
     ImageAcquisition,
-    ImageCaptureMode,
     ImageData,
     ImageDeployment,
     ImageFaunaAttraction,
@@ -25,6 +23,7 @@ from ifdo.models import (
     ImageQuality,
     ImageSpectralResolution,
 )
+from rich import print
 
 from marimba.core.pipeline import BasePipeline
 from marimba.core.utils.rich import error_panel
@@ -102,7 +101,7 @@ class FlowCamPipeline(BasePipeline):
         self,
         data_dir: Path,
         source_path: Path,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         **kwargs: dict,
     ):
         # This is really a process to extract the individual vignettes from the collage images
@@ -185,7 +184,7 @@ class FlowCamPipeline(BasePipeline):
                         copy2(file_path, rep_data_dir)
                     self.logger.debug(f"Copied {file_path.resolve().absolute()} -> {rep_dir}")
 
-    def _process(self, data_dir: Path, config: Dict[str, Any], **kwargs: dict):
+    def _process(self, data_dir: Path, config: dict[str, Any], **kwargs: dict):
 
         month, year = re.search(r"\d+([A-Za-z]+)(\d+)", data_dir.parent.name).groups()
         station_data_df = pd.read_csv("/datasets/work/ev-flowcam-ml/source/station_data.csv")
@@ -234,21 +233,20 @@ class FlowCamPipeline(BasePipeline):
                                     summary_csv = rep_data_dir / f"{data_dir.parent.name}rep{int(rep_id.name)}_summary.csv"
                                     self.logger.info(f"Found data CSV file: {data_csv}")
                                 except Exception:
-                                    error_message = f"No CSV files found in the {str(rep_data_dir)} directory."
+                                    error_message = f"No CSV files found in the {rep_data_dir!s} directory."
                                     self.logger.error(error_message)
                                     print(error_panel(error_message))
                                     raise typer.Exit()
 
                                 def extract_magnification(file_path):
-                                    with open(file_path, "r") as file:
+                                    with open(file_path) as file:
                                         content = file.read()
 
                                     # Using regular expression to find 'Magnification: value'
                                     match = re.search(r"Magnification,\s*([\d.]+)", content)
                                     if match:
                                         return match.group(1)  # Return the value found after 'Magnification:'
-                                    else:
-                                        return "Magnification value not found"
+                                    return "Magnification value not found"
 
                                 data_df = pd.read_csv(data_csv)
                                 data_df["Filename"] = ""
@@ -269,7 +267,7 @@ class FlowCamPipeline(BasePipeline):
                                         + f'{config.get("field_of_view")}FOV_'
                                         + f"{iso_timestamp}_"
                                         + f"{capture_id}"
-                                        + f".JPG"
+                                        + ".JPG"
                                     )
                                     output_path = image_dir / output_filename
 
@@ -285,10 +283,10 @@ class FlowCamPipeline(BasePipeline):
     def _package(
         self,
         data_dir: Path,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         **kwargs: dict,
-    ) -> Dict[Path, Tuple[Path, Optional[List[ImageData]], Optional[Dict[str, Any]]]]:
-        data_mapping: Dict[Path, Tuple[Path, Optional[List[ImageData]], Optional[Dict[str, Any]]]] = {}
+    ) -> dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]]:
+        data_mapping: dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]] = {}
 
         month, year = re.search(r"\d+([A-Za-z]+)(\d+)", data_dir.parent.name).groups()
         station_data_df = pd.read_csv("/datasets/work/ev-flowcam-ml/source/station_data.csv")
@@ -350,7 +348,7 @@ class FlowCamPipeline(BasePipeline):
                                     data_csv = rep_data_dir / f"{data_dir.parent.name}rep{int(rep_id.name)}.csv"
                                     self.logger.info(f"Found data CSV file: {data_csv}")
                                 except Exception:
-                                    error_message = f"No CSV files found in the {str(rep_data_dir)} directory."
+                                    error_message = f"No CSV files found in the {rep_data_dir!s} directory."
                                     self.logger.error(error_message)
                                     print(error_panel(error_message))
                                     raise typer.Exit()
@@ -442,7 +440,7 @@ class FlowCamPipeline(BasePipeline):
                                                 # image_annotation_labels: Optional[List[ImageAnnotationLabel]] = None
                                                 # image_annotation_creators: Optional[List[ImageAnnotationCreator]] = None
                                                 # image_annotations: Optional[List[ImageAnnotation]] = None
-                                            )
+                                            ),
                                         ]
 
                                         data_mapping[file_path] = output_file_path, image_data_list, row.to_dict()
