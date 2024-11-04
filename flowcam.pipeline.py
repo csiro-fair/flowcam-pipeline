@@ -141,85 +141,135 @@ class FlowCamPipeline(BasePipeline):
             config: dict[str, Any],
             **kwargs: dict,  # noqa: ARG002
     ) -> None:
-        # This is really a process to extract the individual vignettes from the collage images
+        """Import and process data from source path to data directory."""
         self.logger.info(f"Importing data from {source_path=} to {data_dir}")
 
         if not source_path.is_dir():
             return
 
+        # Extract date information and get creation date
+        creation_date = self._get_creation_date(data_dir, config["site_id"])
+        date_dir = creation_date.strftime("%Y-%m-%d")
+
+        # Process files for each replicate
+        rep_ids = self._get_replicate_ids(source_path)
+        if not rep_ids:
+            print("No Rep ID found in the source path.")
+            return
+
+        for rep_id in rep_ids:
+            self._process_replicate(
+                rep_id=rep_id,
+                source_path=source_path,
+                data_dir=data_dir,
+                config=config,
+                date_dir=date_dir,
+            )
+
+    def _get_creation_date(self, data_dir: Path, site_id: str) -> datetime:
+        """Extract creation date from station data based on directory name and site ID."""
         month, year = re.search(r"\d+([A-Za-z]+)(\d+)", data_dir.parent.name).groups()
         station_data_df = pd.read_csv("/datasets/work/ev-flowcam-ml/source/station_data.csv")
-        site_id = config.get("site_id")
 
-        # Get the row where station_id equals site_id
+        # Convert month name to number and prepare date filters
         month_num = pd.to_datetime(month, format="%B").month
         year_num = int(year)
-        station_data_df["date"] = pd.to_datetime(station_data_df["date"], format="%d/%m/%Y", errors="coerce")
+
+        # Process station data
+        station_data_df["date"] = pd.to_datetime(
+            station_data_df["date"],
+            format="%d/%m/%Y",
+            errors="coerce",
+        )
+
         station_row = station_data_df[
             (station_data_df["station_id"] == site_id)
             & (station_data_df["date"].dt.month == month_num)
             & (station_data_df["date"].dt.year == year_num)
             ]
 
-        # Check if exactly one row is returned
+        # Validate and process results
         if len(station_row) == 1:
             start_time_local = station_row.iloc[0]["start_time_local"]
-            creation_date = datetime.strptime(start_time_local + " +0800", "%d/%m/%Y %H:%M %z")
-            # ISO 8601 Date Format
-            date_dir = creation_date.strftime("%Y-%m-%d")
-        elif len(station_row) == 0:
-            error_message = "No matching data found for the given site_id, month, and year."
-            self.logger.exception(error_message)
-            print(error_panel(error_message))
-            raise typer.Exit from None
-        else:
-            error_message = "Multiple matching rows found. Please check the data."
-            self.logger.exception(error_message)
-            print(error_panel(error_message))
-            raise typer.Exit from None
+            return datetime.strptime(start_time_local + " +0800", "%d/%m/%Y %H:%M %z")
+        if len(station_row) == 0:
+            return self._handle_error("No matching data found for the given site_id, month, and year.")
+        return self._handle_error("Multiple matching rows found. Please check the data.")
 
-        # Regular expression to match the rep number in the filenames
+    def _get_replicate_ids(self, source_path: Path) -> set[int]:
+        """Extract unique replicate IDs from filenames in source directory."""
         rep_pattern = re.compile(r"rep(\d+)")
-
-        # Find all files in the directory
-        files = [f for f in source_path.iterdir() if f.is_file()]
-
-        # Extract rep IDs
         rep_ids = set()
-        for file in files:
-            match = rep_pattern.search(file.name)
-            if match:
-                rep_ids.add(int(match.group(1)))  # Convert the matched group to integer
-        if not rep_ids:
-            print("No Rep ID found in the source path.")
 
-        for rep_id in rep_ids:
+        for file in source_path.iterdir():
+            if file.is_file() and (match := rep_pattern.search(file.name)):
+                rep_ids.add(int(match.group(1)))
 
-            rep_dir = data_dir / config.get("site_id") / date_dir / str(rep_id).zfill(2)
-            rep_dir.mkdir(exist_ok=True, parents=True)
+        return rep_ids
 
-            sorted_file_names = sorted(
-                (f for f in source_path.iterdir() if f.is_file() and f"rep{rep_id}" in f.name),
-                key=lambda p: self.natural_sort_key(p.name),
+    def _process_replicate(
+            self,
+            rep_id: int,
+            source_path: Path,
+            data_dir: Path,
+            config: dict,
+            date_dir: str,
+    ) -> None:
+        """Process all files for a single replicate."""
+        # Create replicate directory
+        rep_dir = data_dir / config["site_id"] / date_dir / str(rep_id).zfill(2)
+        rep_dir.mkdir(exist_ok=True, parents=True)
+
+        # Get sorted files for this replicate
+        sorted_files = sorted(
+            (f for f in source_path.iterdir()
+             if f.is_file() and f"rep{rep_id}" in f.name),
+            key=lambda p: self.natural_sort_key(p.name),
+        )
+
+        # Process each file based on its extension
+        vignette_counter = 1
+        for file_path in sorted_files:
+            vignette_counter = self._process_file(
+                file_path=file_path,
+                rep_dir=rep_dir,
+                vignette_counter=vignette_counter,
             )
 
-            i = 1
-            for file_path in sorted_file_names:
-                if file_path.suffix.lower() == ".png":
-                    self.logger.info(f"Extracting vignettes from {file_path.name}")
-                    images_dir = rep_dir / "images"
-                    images_dir.mkdir(exist_ok=True, parents=True)
-                    i = self.find_sub_images(file_path, images_dir, i)
-                if file_path.suffix.lower() == ".tif":
-                    cal_dir = rep_dir / "cal"
-                    cal_dir.mkdir(exist_ok=True, parents=True)
-                    copy2(file_path, cal_dir)
-                if file_path.suffix.lower() in [".csv", ".pdf"]:
-                    if not self.dry_run:
-                        rep_data_dir = rep_dir / "data"
-                        rep_data_dir.mkdir(exist_ok=True, parents=True)
-                        copy2(file_path, rep_data_dir)
-                    self.logger.debug(f"Copied {file_path.resolve().absolute()} -> {rep_dir}")
+    def _process_file(
+            self,
+            file_path: Path,
+            rep_dir: Path,
+            vignette_counter: int,
+    ) -> int:
+        """Process a single file based on its extension."""
+        suffix = file_path.suffix.lower()
+
+        if suffix == ".png":
+            self.logger.info(f"Extracting vignettes from {file_path.name}")
+            images_dir = rep_dir / "images"
+            images_dir.mkdir(exist_ok=True, parents=True)
+            return self.find_sub_images(file_path, images_dir, vignette_counter)
+
+        if suffix == ".tif":
+            cal_dir = rep_dir / "cal"
+            cal_dir.mkdir(exist_ok=True, parents=True)
+            copy2(file_path, cal_dir)
+
+        elif suffix in [".csv", ".pdf"]:
+            if not self.dry_run:
+                rep_data_dir = rep_dir / "data"
+                rep_data_dir.mkdir(exist_ok=True, parents=True)
+                copy2(file_path, rep_data_dir)
+            self.logger.debug(f"Copied {file_path.resolve().absolute()} -> {rep_dir}")
+
+        return vignette_counter
+
+    def _handle_error(self, message: str) -> None:
+        """Handle errors uniformly throughout the importer."""
+        self.logger.exception(message)
+        print(error_panel(message))
+        raise typer.Exit from None
 
     def _process(
             self,
