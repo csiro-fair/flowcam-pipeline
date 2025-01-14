@@ -14,7 +14,6 @@ import pytz
 import typer
 from ifdo.models import (
     ImageAcquisition,
-    ImageCaptureMode,
     ImageContext,
     ImageCreator,
     ImageData,
@@ -543,7 +542,7 @@ class FlowCamPipeline(BasePipeline):
         """Create an ImageData object for a given row."""
         image_pi = ImagePI(name="Joanna Strzelecki", orcid="0000-0003-1138-2932")
         image_creators = [
-            ImageCreator(name="Chris Jackett", orcid="0000-0003-1132-1558"),
+            ImageCreator(name="Christopher Jackett", orcid="0000-0003-1132-1558"),
             ImageCreator(name="Joanna Strzelecki", orcid="0000-0003-1138-2932"),
         ]
 
@@ -559,20 +558,24 @@ class FlowCamPipeline(BasePipeline):
 
         # Create ImageContext and ImageLicense objects
         image_context = ImageContext(name=(
-            ""
+            "The CSIRO strategic project was collecting plankton images using FlowCam to develop machine learning "
+            "solutions for automating identification of phytoplankton."
         ),
             uri="",
         )
-        image_project = ImageContext(name=(
-            ""
-        ),
+        image_project = ImageContext(name="Series of coastal voyages off the coast of Perth, Western Australia.",
             uri="",
         )
         image_event = ImageContext(name="")
         image_sensor = ImageContext(name="")
         image_license = ImageLicense(name="CC BY-NC 4.0", uri="https://creativecommons.org/licenses/by-nc/4.0")
         image_abstract = (
-            ""
+            "A high-quality image dataset was captured for a selected range of Australian plankton from Western "
+            "Australia. The images were captured to improve the automated classification of a broad range of marine "
+            "plankton using modern deep learning techniques. The project aimed to develop an open-source "
+            "classification model and publish the model in alignment with FAIR (Findable, Accessible, Interoperable, "
+            "Reusable) data practice. The data set was captured using the FlowCam 8400, an imaging flow cytometer that "
+            "combines the speed and statistical power of flow cytometry with the morphological insights of microscopy."
         )
 
         # ruff: noqa: ERA001
