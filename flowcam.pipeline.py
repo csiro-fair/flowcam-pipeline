@@ -1,4 +1,4 @@
-"""Marimba Pipeline for the CSIRO FlowCam 8000."""  # noqa: N999
+"""Marimba Pipeline for the CSIRO FlowCam 8000."""  # noqa: INP001
 
 import re
 import uuid
@@ -14,10 +14,14 @@ import pytz
 import typer
 from ifdo.models import (
     ImageAcquisition,
+    ImageCaptureMode,
+    ImageContext,
+    ImageCreator,
     ImageData,
     ImageDeployment,
     ImageFaunaAttraction,
     ImageIllumination,
+    ImageLicense,
     ImageMarineZone,
     ImageNavigation,
     ImagePI,
@@ -28,6 +32,7 @@ from ifdo.models import (
 from rich import print
 
 from marimba.core.pipeline import BasePipeline
+from marimba.core.schemas.ifdo import iFDOMetadata
 from marimba.core.utils.rich import error_panel
 from marimba.core.wrappers.dataset import DatasetWrapper
 from marimba.main import __version__
@@ -40,6 +45,29 @@ class FlowCamPipeline(BasePipeline):
 
     MIN_REGION_AREA = 100  # Minimum area in pixels to consider a valid region
     MAX_PIXEL_STD_DEV = 80  # Maximum standard deviation of pixel intensities
+    def __init__(
+        self,
+        root_path: str | Path,
+        config: dict[str, Any] | None = None,
+        *,
+        dry_run: bool = False,
+    ) -> None:
+        """
+        Initialize a new Pipeline instance.
+
+        Args:
+            root_path (str | Path): Base directory path where the pipeline will store its data and configuration files.
+            config (dict[str, Any] | None, optional): Pipeline configuration dictionary. If None, default configuration
+             will be used. Defaults to None.
+            dry_run (bool, optional): If True, prevents any filesystem modifications. Useful for validation and testing.
+             Defaults to False.
+        """
+        super().__init__(
+            root_path,
+            config,
+            dry_run=dry_run,
+            metadata_class=iFDOMetadata,
+        )
 
     @staticmethod
     def get_pipeline_config_schema() -> dict[str, str]:
@@ -50,8 +78,6 @@ class FlowCamPipeline(BasePipeline):
             dict: Configuration parameters for the pipeline
         """
         return {
-            "project_pi": "Joanna Strzelecki",
-            "data_collector": "Joanna Strzelecki",
             "platform_id": "FC8000",
         }
 
@@ -64,7 +90,7 @@ class FlowCamPipeline(BasePipeline):
             dict: Configuration parameters for the collection
         """
         return {
-            "site_id": "CS6",
+            "site_id": "",
             "field_of_view": "1000",
         }
 
@@ -517,8 +543,8 @@ class FlowCamPipeline(BasePipeline):
         """Create an ImageData object for a given row."""
         image_pi = ImagePI(name="Joanna Strzelecki", orcid="0000-0003-1138-2932")
         image_creators = [
-            image_pi,
-            ImagePI(name="Chris Jackett", orcid="0000-0003-1132-1558"),
+            ImageCreator(name="Chris Jackett", orcid="0000-0003-1132-1558"),
+            ImageCreator(name="Joanna Strzelecki", orcid="0000-0003-1138-2932"),
         ]
 
         # Validate that self.config exists
@@ -529,6 +555,25 @@ class FlowCamPipeline(BasePipeline):
         platform_id = self.config.get("platform_id")
         if not isinstance(platform_id, str):
             raise TypeError("platform_id must be provided in the pipeline config and must be a string")
+        image_platform = ImageContext(name=platform_id)
+
+        # Create ImageContext and ImageLicense objects
+        image_context = ImageContext(name=(
+            ""
+        ),
+            uri="",
+        )
+        image_project = ImageContext(name=(
+            ""
+        ),
+            uri="",
+        )
+        image_event = ImageContext(name="")
+        image_sensor = ImageContext(name="")
+        image_license = ImageLicense(name="CC BY-NC 4.0", uri="https://creativecommons.org/licenses/by-nc/4.0")
+        image_abstract = (
+            ""
+        )
 
         # ruff: noqa: ERA001
         return ImageData(
@@ -536,71 +581,70 @@ class FlowCamPipeline(BasePipeline):
             image_datetime=image_datetime,
             image_latitude=latitude,
             image_longitude=longitude,
-            image_altitude=depth,
+            image_altitude_meters=depth,
             image_coordinate_reference_system="EPSG:4326",
-            # image_coordinate_uncertainty_meters=None,
-            # image_context=row["image_context"],
-            # image_project=row["survey_id"],
-            # image_event=f'{row["survey_id"]}_{row["deployment_number"]}',
-            image_platform=platform_id,
-            # image_sensor=str(row["camera_name"]).strip(),
+            image_coordinate_uncertainty_meters=None,
+            image_context=image_context,
+            image_project=image_project,
+            image_event=image_event,
+            image_platform=image_platform,
+            image_sensor=image_sensor,
             image_uuid=str(uuid.UUID(row["UUID"])),
-            # image_hash_sha256=image_hash_sha256,
             image_pi=image_pi,
             image_creators=image_creators,
-            image_license="CC BY-NC 4.0",
+            image_license=image_license,
             image_copyright="CSIRO",
-            # image_abstract=row["abstract"],
-            #
-            # # iFDO capture (optional)
+            image_abstract=image_abstract,
+
+            # iFDO capture (optional)
             image_acquisition=ImageAcquisition.PHOTO,
             image_quality=ImageQuality.PRODUCT,
             image_deployment=ImageDeployment.SURVEY,
             image_navigation=ImageNavigation.SATELLITE,
             # image_scale_reference=ImageScaleReference.NONE,
             image_illumination=ImageIllumination.ARTIFICIAL_LIGHT,
-            image_pixel_mag=ImagePixelMagnitude.UM,
+            image_pixel_magnitude=ImagePixelMagnitude.UM,
             image_marine_zone=ImageMarineZone.WATER_COLUMN,
             image_spectral_resolution=ImageSpectralResolution.RGB,
             # image_capture_mode=ImageCaptureMode.MANUAL,
             image_fauna_attraction=ImageFaunaAttraction.NONE,
-            # image_area_square_meter: Optional[float] = None
-            # image_meters_above_ground: Optional[float] = None
-            # image_acquisition_settings: Optional[dict] = None
-            # image_camera_yaw_degrees: Optional[float] = None
-            # image_camera_pitch_degrees: Optional[float] = None
-            # image_camera_roll_degrees: Optional[float] = None
+            # image_area_square_meter=None,
+            # image_meters_above_ground=None,
+            # image_acquisition_settings=None,
+            # image_camera_yaw_degrees=None,
+            # image_camera_pitch_degrees=None,
+            # image_camera_roll_degrees=None,
             # image_overlap_fraction=0,
             image_datetime_format="%Y-%m-%d %H:%M:%S±HHMM",
-            # image_camera_pose: Optional[CameraPose] = None
-            # image_camera_housing_viewport=camera_housing_viewport,
-            # image_flatport_parameters: Optional[FlatportParameters] = None
-            # image_domeport_parameters: Optional[DomeportParameters] = None
-            # image_camera_calibration_model: Optional[CameraCalibrationModel] = None
-            # image_photometric_calibration: Optional[PhotometricCalibration] = None
-            # image_objective: Optional[str] = None
+            # image_camera_pose=None,
+            # image_camera_housing_viewport=None,
+            # image_flatport_parameters=None,
+            # image_domeport_parameters=None,
+            # image_camera_calibration_model=None,
+            # image_photometric_calibration=None,
+            # image_objective=None,
             image_target_environment="Pelagic",
-            # image_target_timescale: Optional[str] = None
-            # image_spatial_constraints: Optional[str] = None
-            # image_temporal_constraints: Optional[str] = None
-            # image_time_synchronization: Optional[str] = None
+            # image_target_timescale=None,
+            # image_spatial_constraints=None,
+            # image_temporal_constraints=None,
+            # image_time_synchronization=None,
             image_item_identification_scheme="<platform_id>_<site_id>_<replicate_id>_<objective_magnification>_<field_of_view>_<datetimestamp>_<capture_id>.<ext>",
             image_curation_protocol=f"Processed with Marimba {__version__}",
-            #
-            # # iFDO content (optional)
+
+            # iFDO content (optional)
             # image_entropy=0.0,
-            # image_particle_count: Optional[int] = None
+            # image_particle_count=None,
             # image_average_color=[0, 0, 0],
-            # image_mpeg7_colorlayout: Optional[List[float]] = None
-            # image_mpeg7_colorstatistics: Optional[List[float]] = None
-            # image_mpeg7_colorstructure: Optional[List[float]] = None
-            # image_mpeg7_dominantcolor: Optional[List[float]] = None
-            # image_mpeg7_edgehistogram: Optional[List[float]] = None
-            # image_mpeg7_homogenoustexture: Optional[List[float]] = None
-            # image_mpeg7_stablecolor: Optional[List[float]] = None
-            # image_annotation_labels: Optional[List[ImageAnnotationLabel]] = None
-            # image_annotation_creators: Optional[List[ImageAnnotationCreator]] = None
-            # image_annotations: Optional[List[ImageAnnotation]] = None
+            # image_mpeg7_colorlayout=None,
+            # image_mpeg7_colorstatistics=None,
+            # image_mpeg7_colorstructure=None,
+            # image_mpeg7_dominantcolor=None,
+            # image_mpeg7_edgehistogram=None,
+            # image_mpeg7_homogenoustexture=None,
+            # image_mpeg7_stablecolor=None,
+            # image_annotation_labels=None,
+            # image_annotation_creators=None,
+            # image_annotations=None,
         )
 
     def _generate_summaries(
@@ -623,43 +667,43 @@ class FlowCamPipeline(BasePipeline):
                     summary_directories.add(str(Path(parts[0]) / parts[1]))
                     ifdo_directories.add(str(Path(parts[0]) / parts[1]))
 
-        # Convert the sets to sorted lists
-        summary_dirs: list[str] = sorted(summary_directories)
-        ifdo_dirs: list[str] = sorted(ifdo_directories)
-
-        # Generate summaries
-        for directory in summary_dirs:
-            subset_data_mapping = {
-                src.as_posix(): image_data_list
-                for src, (relative_dst, image_data_list, _) in data_mapping.items()
-                if str(relative_dst).startswith(directory) and image_data_list
-            }
-
-            # Create a dataset summary
-            dataset_wrapper = DatasetWrapper(data_dir / directory, version=None, dry_run=True)
-            dataset_wrapper.dry_run = False
-            dataset_wrapper.generate_dataset_summary(subset_data_mapping, progress=False)
-
-            # Add the summary to the dataset mapping
-            output_file_path = dataset_wrapper.summary_path.relative_to(data_dir)
-            data_mapping[dataset_wrapper.summary_path] = output_file_path, None, None
-
-        # Generate iFDOs
-        for directory in ifdo_dirs:
-            subset_data_mapping = {
-                relative_dst.relative_to(directory).as_posix(): image_data_list
-                for src, (relative_dst, image_data_list, _) in data_mapping.items()
-                if str(relative_dst).startswith(directory) and image_data_list
-            }
-
-            # Create an iFDO
-            dataset_wrapper = DatasetWrapper(data_dir / directory, version=None, dry_run=True)
-            dataset_wrapper.dry_run = False
-            dataset_wrapper.generate_ifdo(directory, subset_data_mapping, progress=False)
-
-            # Add the iFDO to the dataset mapping
-            output_file_path = dataset_wrapper.metadata_path.relative_to(data_dir)
-            data_mapping[dataset_wrapper.metadata_path] = output_file_path, None, None
+        # # Convert the sets to sorted lists
+        # summary_dirs: list[str] = sorted(summary_directories)
+        # ifdo_dirs: list[str] = sorted(ifdo_directories)
+        #
+        # # Generate summaries
+        # for directory in summary_dirs:
+        #     subset_data_mapping = {
+        #         src.as_posix(): image_data_list
+        #         for src, (relative_dst, image_data_list, _) in data_mapping.items()
+        #         if str(relative_dst).startswith(directory) and image_data_list
+        #     }
+        #
+        #     # Create a dataset summary
+        #     dataset_wrapper = DatasetWrapper(data_dir / directory, version=None, dry_run=True)
+        #     dataset_wrapper.dry_run = False
+        #     dataset_wrapper.generate_dataset_summary(subset_data_mapping, progress=False)
+        #
+        #     # Add the summary to the dataset mapping
+        #     output_file_path = dataset_wrapper.summary_path.relative_to(data_dir)
+        #     data_mapping[dataset_wrapper.summary_path] = output_file_path, None, None
+        #
+        # # Generate iFDOs
+        # for directory in ifdo_dirs:
+        #     subset_data_mapping = {
+        #         relative_dst.relative_to(directory).as_posix(): image_data_list
+        #         for src, (relative_dst, image_data_list, _) in data_mapping.items()
+        #         if str(relative_dst).startswith(directory) and image_data_list
+        #     }
+        #
+        #     # Create an iFDO
+        #     dataset_wrapper = DatasetWrapper(data_dir / directory, version=None, dry_run=True)
+        #     dataset_wrapper.dry_run = False
+        #     dataset_wrapper.generate_ifdo(directory, subset_data_mapping, progress=False)
+        #
+        #     # Add the iFDO to the dataset mapping
+        #     output_file_path = dataset_wrapper.metadata_path.relative_to(data_dir)
+        #     data_mapping[dataset_wrapper.metadata_path] = output_file_path, None, None
 
     def _process_replicate_directory(
             self,
@@ -690,14 +734,15 @@ class FlowCamPipeline(BasePipeline):
             output_file_path = file_path.relative_to(data_dir)
 
             if file_path.is_file() and file_path.suffix.lower() in [".jpg"]:
-                image_data_list = self._create_image_data(
+                image_data = self._create_image_data(
                     row.to_dict(),
                     image_datetime,
                     latitude,
                     longitude,
                     depth,
                 )
-                rep_mapping[file_path] = output_file_path, [image_data_list], row.to_dict()
+                metadata = self._metadata_class(image_data)
+                rep_mapping[file_path] = output_file_path, [metadata], row.to_dict()
 
         return rep_mapping
 
