@@ -1,4 +1,4 @@
-"""Marimba Pipeline for the CSIRO FlowCam 8000."""  # noqa: INP001
+"""Marimba Pipeline for the CSIRO FlowCam 8400."""  # noqa: INP001
 
 import re
 import uuid
