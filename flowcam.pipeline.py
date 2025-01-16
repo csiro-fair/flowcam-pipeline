@@ -33,7 +33,6 @@ from rich import print
 from marimba.core.pipeline import BasePipeline
 from marimba.core.schemas.ifdo import iFDOMetadata
 from marimba.core.utils.rich import error_panel
-from marimba.core.wrappers.dataset import DatasetWrapper
 from marimba.main import __version__
 
 
@@ -650,64 +649,6 @@ class FlowCamPipeline(BasePipeline):
             # image_annotations=None,
         )
 
-    def _generate_summaries(
-            self,
-            data_mapping: dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]],
-            data_dir: Path,
-    ) -> None:
-        """Generate dataset summaries and iFDOs."""
-        summary_directories: set[str] = set()
-        ifdo_directories: set[str] = set()
-
-        # Collect output directories
-        for relative_dst, image_data_list, _ in data_mapping.values():
-            if image_data_list:
-                parts = relative_dst.parts
-                if len(parts) > 0:
-                    summary_directories.add(parts[0])
-                    ifdo_directories.add(parts[0])
-                if len(parts) > 1:
-                    summary_directories.add(str(Path(parts[0]) / parts[1]))
-                    ifdo_directories.add(str(Path(parts[0]) / parts[1]))
-
-        # # Convert the sets to sorted lists
-        # summary_dirs: list[str] = sorted(summary_directories)
-        # ifdo_dirs: list[str] = sorted(ifdo_directories)
-        #
-        # # Generate summaries
-        # for directory in summary_dirs:
-        #     subset_data_mapping = {
-        #         src.as_posix(): image_data_list
-        #         for src, (relative_dst, image_data_list, _) in data_mapping.items()
-        #         if str(relative_dst).startswith(directory) and image_data_list
-        #     }
-        #
-        #     # Create a dataset summary
-        #     dataset_wrapper = DatasetWrapper(data_dir / directory, version=None, dry_run=True)
-        #     dataset_wrapper.dry_run = False
-        #     dataset_wrapper.generate_dataset_summary(subset_data_mapping, progress=False)
-        #
-        #     # Add the summary to the dataset mapping
-        #     output_file_path = dataset_wrapper.summary_path.relative_to(data_dir)
-        #     data_mapping[dataset_wrapper.summary_path] = output_file_path, None, None
-        #
-        # # Generate iFDOs
-        # for directory in ifdo_dirs:
-        #     subset_data_mapping = {
-        #         relative_dst.relative_to(directory).as_posix(): image_data_list
-        #         for src, (relative_dst, image_data_list, _) in data_mapping.items()
-        #         if str(relative_dst).startswith(directory) and image_data_list
-        #     }
-        #
-        #     # Create an iFDO
-        #     dataset_wrapper = DatasetWrapper(data_dir / directory, version=None, dry_run=True)
-        #     dataset_wrapper.dry_run = False
-        #     dataset_wrapper.generate_ifdo(directory, subset_data_mapping, progress=False)
-        #
-        #     # Add the iFDO to the dataset mapping
-        #     output_file_path = dataset_wrapper.metadata_path.relative_to(data_dir)
-        #     data_mapping[dataset_wrapper.metadata_path] = output_file_path, None, None
-
     def _process_replicate_directory(
             self,
             rep_dir: Path,
@@ -805,8 +746,5 @@ class FlowCamPipeline(BasePipeline):
                         depth,
                     )
                     data_mapping.update(rep_mapping)
-
-        # Generate summaries and iFDOs
-        self._generate_summaries(data_mapping, data_dir)
 
         return data_mapping
