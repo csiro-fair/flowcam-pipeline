@@ -38,7 +38,39 @@ from marimba.main import __version__
 
 class FlowCamPipeline(BasePipeline):
     """
-    Marimba Pipeline implementation for processing CSIRO FlowCam 8000.
+    Marimba Pipeline for the CSIRO FlowCam 8400.
+
+    This class extends BasePipeline to handle the specific requirements of processing data from the CSIRO FlowCam 8400.
+    It includes methods for importing, processing, and packaging FlowCam data, including image extraction, metadata
+    handling, and file organization.
+
+    Attributes:
+        MIN_REGION_AREA (int): Minimum area threshold for region detection in image processing.
+        MAX_PIXEL_STD_DEV (int): Maximum standard deviation threshold for pixel values in image processing.
+
+    Methods:
+        __init__: Initialize the FlowCamPipeline instance.
+        get_pipeline_config_schema: Get the pipeline configuration schema.
+        get_collection_config_schema: Get the collection configuration schema.
+        natural_sort_key: Generate a key for natural sorting of strings.
+        find_sub_images: Extract sub-images from a larger image based on contours.
+        _get_creation_date: Extract creation date from station data.
+        _get_replicate_ids: Extract unique replicate IDs from filenames.
+        _process_replicate: Process all files for a single replicate.
+        _process_file: Process a single file based on its extension.
+        _handle_error: Handle errors uniformly throughout the importer.
+        _import: Import and process data from source path to data directory.
+        _get_timestamp: Extract timestamp from station data.
+        _extract_magnification: Extract magnification value from summary CSV file.
+        _verify_csv_files: Verify that required CSV files exist.
+        _process_rep_directory: Process a single replicate directory.
+        _process_images: Process and rename images based on CSV data.
+        _process: Process FlowCam data directory structure.
+        _get_station_metadata: Extract station metadata from the CSV file.
+        _create_image_data: Create an ImageData object for a given row.
+        _process_replicate_directory: Process a single replicate directory and return its data mapping.
+        _collect_ancillary_files: Collect all ancillary files that aren't in image directories.
+        _package: Package the data directory into a standardized format.
     """
 
     MIN_REGION_AREA = 100  # Minimum area in pixels to consider a valid region
@@ -76,7 +108,7 @@ class FlowCamPipeline(BasePipeline):
             dict: Configuration parameters for the pipeline
         """
         return {
-            "platform_id": "FC8000",
+            "platform_id": "FC8400",
         }
 
     @staticmethod
