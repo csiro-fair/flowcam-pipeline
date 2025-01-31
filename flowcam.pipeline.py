@@ -564,6 +564,7 @@ class FlowCamPipeline(BasePipeline):
 
     def _create_image_data(
             self,
+            output_file_path: Path,
             row: dict[str, Any],
             image_datetime: str,
             latitude: float,
@@ -571,10 +572,14 @@ class FlowCamPipeline(BasePipeline):
             depth: float,
     ) -> ImageData:
         """Create an ImageData object for a given row."""
-        image_pi = ImagePI(name="Joanna Strzelecki", orcid="0000-0003-1138-2932")
+        image_pi = ImagePI(name="Joanna Strzelecki", uri="https://orcid.org/0000-0003-1138-2932")
         image_creators = [
-            ImageCreator(name="Christopher Jackett", orcid="0000-0003-1132-1558"),
-            ImageCreator(name="Joanna Strzelecki", orcid="0000-0003-1138-2932"),
+            ImageCreator(name="Christopher Jackett", uri="https://orcid.org/0000-0003-1132-1558"),
+            ImageCreator(name="Joanna Strzelecki", uri="https://orcid.org/0000-0003-1138-2932"),
+            ImageCreator(name="Ruth Eriksen", uri="https://orcid.org/0000-0002-5184-2465"),
+            ImageCreator(name="Julian Uribe-Palomino", uri="https://orcid.org/0000-0002-6867-2108"),
+            ImageCreator(name="James McLaughlin", uri="https://orcid.org/0000-0002-9936-1919"),
+            ImageCreator(name="CSIRO", uri="https://www.csiro.au"),
         ]
 
         # Validate that self.config exists
@@ -591,14 +596,10 @@ class FlowCamPipeline(BasePipeline):
         image_context = ImageContext(name=(
             "The CSIRO strategic project was collecting plankton images using FlowCam to develop machine learning "
             "solutions for automating identification of phytoplankton."
-        ),
-            uri="",
-        )
-        image_project = ImageContext(name="Series of coastal voyages off the coast of Perth, Western Australia.",
-            uri="",
-        )
-        image_event = ImageContext(name="")
-        image_sensor = ImageContext(name="")
+        ))
+        image_project = ImageContext(name="Series of coastal voyages off the coast of Perth, Western Australia.")
+        image_event = ImageContext(name=output_file_path.stem)
+        image_sensor = ImageContext(name="CMOS Sensor")
         image_license = ImageLicense(name="CC BY-NC 4.0", uri="https://creativecommons.org/licenses/by-nc/4.0")
         image_abstract = (
             "A high-quality image dataset was captured for a selected range of Australian plankton from Western "
@@ -611,7 +612,7 @@ class FlowCamPipeline(BasePipeline):
 
         # ruff: noqa: ERA001
         return ImageData(
-            # iFDO core (required)
+            # iFDO core
             image_datetime=image_datetime,
             image_latitude=latitude,
             image_longitude=longitude,
@@ -711,6 +712,7 @@ class FlowCamPipeline(BasePipeline):
 
             if file_path.is_file() and file_path.suffix.lower() in [".jpg"]:
                 image_data = self._create_image_data(
+                    output_file_path,
                     row.to_dict(),
                     image_datetime,
                     latitude,
@@ -742,6 +744,8 @@ class FlowCamPipeline(BasePipeline):
             **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]]:
         """Package the data directory into a standardized format."""
+
+        # Initialise an empty dictionary to store file mappings
         data_mapping: dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]] = {}
 
         # Get site_id from config and validate it
