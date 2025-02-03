@@ -744,7 +744,6 @@ class FlowCamPipeline(BasePipeline):
             **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]]:
         """Package the data directory into a standardized format."""
-
         # Initialise an empty dictionary to store file mappings
         data_mapping: dict[Path, tuple[Path, list[ImageData] | None, dict[str, Any] | None]] = {}
 
