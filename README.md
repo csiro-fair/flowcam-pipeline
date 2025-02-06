@@ -121,7 +121,7 @@ PCW_2022/                                                               # Root d
 │                       └── FC8400[Station]##[Magnification][FOV].JPG   # Image files
 ├── logs/                                                               # Directory containing all processing logs
 │   ├── pipelines/                                                      # Pipeline-specific logs
-│   │   └── FC8400.log                                                  # Logs from FlowCam processing pipeline
+│   │   └── FC8400.log                                                  # Logs from FlowCam Pipeline
 │   ├── dataset.log                                                     # Dataset packaging logs
 │   └── project.log                                                     # Overall project processing logs
 ├── pipelines/                                                          # Directory containing pipeline code
@@ -140,7 +140,7 @@ PCW_2022/                                                               # Root d
 
 ## Metadata
 
-The Pipeline captures comprehensive metadata including:
+The FlowCam Pipeline captures comprehensive metadata including:
 
 ### Station Metadata
 - GPS coordinates
@@ -160,7 +160,7 @@ The Pipeline captures comprehensive metadata including:
 - Volumetric calculations (biovolume across geometric models)
 - Positional data (capture coordinates, timestamps)
 
-All metadata is standardized using the iFDO schema and embedded in both image EXIF tags and dataset-level files.
+All metadata is standardized using the iFDO schema (v2.1.0) and embedded in both image EXIF tags and dataset-level files.
 
 
 ## Contributors
@@ -175,7 +175,7 @@ The FlowCam Pipeline was developed by:
 
 ## License
 
-This Marimba Pipeline is distributed under the [CSIRO BSD/MIT](LICENSE) license.
+The FlowCam Pipeline is distributed under the [CSIRO BSD/MIT](LICENSE) license.
 
 
 ## Contact
