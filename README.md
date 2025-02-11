@@ -50,7 +50,7 @@ Each Collection requires:
 
 ## Usage
 
-### Importing Data
+### Importing
 
 Import collections with site-specific configurations:
 ```bash
@@ -108,33 +108,33 @@ The `--operation link` flag creates hard links instead of copying files, optimiz
 ## Processed Data Structure
 
 ```                
-PCW_2022/                                                               # Root dataset directory
-├── data/                                                               # Directory containing all processed data
-│   └── FC8400/                                                         # FlowCam instrument-specific data directory
-│       └── [CS|OW]*/                                                   # Station directories (CS17, OW43, etc.)
-│           └── YYYY-MM-DD/                                             # Date-based directories
-│               └── ##/                                                 # Sequential run numbers (01, 02, etc.)
-│                   ├── data/                                           # Run-specific data files
-│                   │   ├── [Station][Month][Year]rep[#].csv            # Main data file
-│                   │   └── [Station][Month][Year]rep[#]summary.csv     # Summary statistics
-│                   └── images/                                         # Run-specific images
-│                       └── FC8400[Station]##[Magnification][FOV].JPG   # Image files
-├── logs/                                                               # Directory containing all processing logs
-│   ├── pipelines/                                                      # Pipeline-specific logs
-│   │   └── FC8400.log                                                  # Logs from FlowCam Pipeline
-│   ├── dataset.log                                                     # Dataset packaging logs
-│   └── project.log                                                     # Overall project processing logs
-├── pipelines/                                                          # Directory containing pipeline code
-│   └── FC8400/                                                         # Pipeline-specific directory
-│       ├── repo/                                                       # Pipeline source code repository
-│       │   ├── flowcam.pipeline.py                                     # Pipeline implementation
-│       │   ├── LICENSE                                                 # Pipeline license file
-│       │   └── README.md                                               # Pipeline README file
-│       └── pipeline.yml                                                # Pipeline configuration
-├── ifdo.yml                                                            # Dataset-level iFDO metadata file
-├── manifest.txt                                                        # File manifest with SHA256 hashes
-├── map.png                                                             # Spatial visualization of dataset
-└── summary.md                                                          # Dataset summary and statistics
+PCW_2022/                                                                                           # Root dataset directory
+├── data/                                                                                           # Directory containing all processed data
+│   └── FC8400/                                                                                     # FlowCam instrument-specific data directory
+│       └── [CS|OW]*/                                                                               # Station directories (CS17, OW43, etc.)
+│           └── YYYY-MM-DD/                                                                         # Date-based directories
+│               └── ##/                                                                             # Sequential run numbers (01, 02, etc.)
+│                   ├── data/                                                                       # Run-specific data files
+│                   │   ├── [Station][Month][Year]rep[#].csv                                        # Main data file
+│                   │   └── [Station][Month][Year]rep[#]_summary.csv                                # Summary statistics
+│                   └── images/                                                                     # Run-specific images
+│                       └── FC8400_[Station]##_[Magnification]_[FOV]_[Timestamp]_[Capture_ID].JPG   # Image files
+├── logs/                                                                                           # Directory containing all processing logs
+│   ├── pipelines/                                                                                  # Pipeline-specific logs
+│   │   └── FC8400.log                                                                              # Logs from FlowCam Pipeline
+│   ├── dataset.log                                                                                 # Dataset packaging logs
+│   └── project.log                                                                                 # Overall project processing logs
+├── pipelines/                                                                                      # Directory containing pipeline code
+│   └── FC8400/                                                                                     # Pipeline-specific directory
+│       ├── repo/                                                                                   # Pipeline source code repository
+│       │   ├── flowcam.pipeline.py                                                                 # Pipeline implementation
+│       │   ├── LICENSE                                                                             # Pipeline license file
+│       │   └── README.md                                                                           # Pipeline README file
+│       └── pipeline.yml                                                                            # Pipeline configuration
+├── ifdo.yml                                                                                        # Dataset-level iFDO metadata file
+├── manifest.txt                                                                                    # File manifest with SHA256 hashes
+├── map.png                                                                                         # Spatial visualization of dataset
+└── summary.md                                                                                      # Dataset summary and statistics
 ```
 
 
