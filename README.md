@@ -58,7 +58,7 @@ marimba import collection-one '/path/to/source/station-one/' \
 --config '{"site_id": "SITE01", "field_of_view": "1000"}'
 ```
 
-For monitoring campaigns, multiple stations can be processed in batch:
+For monitoring campaigns, multiple stations can be imported sequentially:
 ```bash
 # Import multiple stations
 marimba import collection-one '/path/to/station-one/' --config '{"site_id": "SITE01", "field_of_view": "1000"}'
@@ -95,7 +95,7 @@ During processing, the FlowCam Pipeline:
 ### Packaging
 
 ```bash
-marimba package my-flowcam-dataset \
+marimba package PCW_2022 \
 --operation link \
 --version 1.0 \
 --contact-name "Keiko Abe" \
