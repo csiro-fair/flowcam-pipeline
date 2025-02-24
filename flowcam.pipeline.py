@@ -28,12 +28,12 @@ from ifdo.models import (
     ImageQuality,
     ImageSpectralResolution,
 )
-from rich import print
-
 from marimba.core.pipeline import BasePipeline
 from marimba.core.schemas.ifdo import iFDOMetadata
+from marimba.core.utils.paths import format_path_for_logging
 from marimba.core.utils.rich import error_panel
 from marimba.main import __version__
+from rich import print
 
 
 class FlowCamPipeline(BasePipeline):
@@ -289,7 +289,7 @@ class FlowCamPipeline(BasePipeline):
                 rep_data_dir = rep_dir / "data"
                 rep_data_dir.mkdir(exist_ok=True, parents=True)
                 copy2(file_path, rep_data_dir)
-            self.logger.debug(f"Copied {file_path.resolve().absolute()} -> {rep_dir}")
+            self.logger.debug(f"Copied {file_path.resolve().absolute()} -> {format_path_for_logging(rep_dir)}")
 
         return vignette_counter
 
@@ -307,7 +307,7 @@ class FlowCamPipeline(BasePipeline):
             **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> None:
         """Import and process data from source path to data directory."""
-        self.logger.info(f"Importing data from {source_path=} to {data_dir}")
+        self.logger.info(f"Importing data from {source_path=} to {format_path_for_logging(data_dir)}")
 
         if not source_path.is_dir():
             return
@@ -409,7 +409,7 @@ class FlowCamPipeline(BasePipeline):
             # Verify CSV files exist using the abstracted function
             self._verify_csv_files(data_csv, summary_csv, rep_data_dir)
 
-            self.logger.info(f"Found data CSV file: {data_csv}")
+            self.logger.info(f"Found data CSV file: {format_path_for_logging(data_csv)}")
 
         except (ValueError, TypeError) as e:
             self._handle_error(f"Invalid replicate ID format in {rep_id}: {e!s}")
@@ -697,7 +697,7 @@ class FlowCamPipeline(BasePipeline):
 
         try:
             data_csv = rep_data_dir / f"{data_dir.parent.name}rep{int(rep_dir.name)}.csv"
-            self.logger.info(f"Found data CSV file: {data_csv}")
+            self.logger.info(f"Found data CSV file: {format_path_for_logging(data_csv)}")
         except Exception:
             error_message = f"No CSV files found in the {rep_data_dir!s} directory."
             self.logger.exception(error_message)
